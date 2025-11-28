@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Matemática: Queimadas no Cerrado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax for rendering formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0; /* Slate 200 */
+        }
+        .math-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .card {
+            background-color: #1e293b; /* Slate 800 */
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        /* Garantir que o canvas preencha o container */
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 0.5rem;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        th {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+        tr:hover {
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <header class="text-center space-y-2">
+            <h1 class="text-3xl md:text-4xl font-bold text-orange-500">Queimadas no Cerrado (2020-2024)</h1>
+            <p class="text-slate-400">Análise via Cálculo Diferencial, Curvas Algébricas e Limites</p>
+        </header>
+
+        <!-- Main Layout: Canvas and Derivatives -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Canvas Section -->
+            <div class="card p-4 lg:col-span-2 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-blue-400">Modelagem Gráfica $f(x)$</h2>
+                    <div class="text-xs text-slate-400">Interpolador de Lagrange</div>
+                </div>
+                <!-- Container fixo de altura para o canvas -->
+                <div class="relative w-full h-[400px] flex-grow border border-slate-700 rounded bg-slate-900" id="canvas-container">
+                    <canvas id="fireCanvas"></canvas>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-4 text-sm justify-center">
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span> Dados Reais</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> Curva Algébrica $f(x)$</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-400 mr-2"></span> Tangente (Derivada 2024)</div>
+                </div>
+            </div>
+
+            <!-- Derivatives Table Section -->
+            <div class="card p-4">
+                <h2 class="text-xl font-semibold text-green-400 mb-4">Cálculo de Derivadas</h2>
+                <div class="overflow-x-auto">
+                    <table class="text-sm">
+                        <thead>
+                            <tr>
+                                <th>Ano</th>
+                                <th>$y'$ (Velocidade)</th>
+                                <th>$y''$ (Aceleração)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="derivativesTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-xs text-slate-400">
+                    <p class="mb-2"><strong>$y'$ (1ª Derivada):</strong> Taxa de variação anual de focos.</p>
+                    <p><strong>$y''$ (2ª Derivada):</strong> Aceleração da mudança. O valor positivo alto em 2024 indica explosão.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Limits and Formula Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Limit Simulation -->
+            <div class="card p-6">
+                <h2 class="text-xl font-semibold text-purple-400 mb-4">Aplicação de Limites (em 2024)</h2>
+                <p class="text-slate-300 mb-4">Aproximando a inclinação exata reduzindo o intervalo $h$ a zero.</p>
+                
+                <div class="bg-slate-900 p-4 rounded border border-slate-700 mb-4 math-font text-center text-lg text-white">
+                    $$f'(2024) = \lim_{h \to 0} \frac{f(2024+h) - f(2024)}{h}$$
+                </div>
+
+                <table class="w-full text-sm math-font text-right">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Intervalo ($h$)</th>
+                            <th class="text-center">Resultado Aproximado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="limitTable">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Algebraic Model Info -->
+            <div class="card p-6 flex flex-col justify-center">
+                <h2 class="text-xl font-semibold text-yellow-400 mb-4">A Curva Algébrica</h2>
+                <p class="text-slate-300 mb-4 text-justify">
+                    A curva azul no gráfico é gerada por um polinômio de 4º grau que conecta todos os pontos. Isso nos permite calcular derivadas em qualquer ponto, não apenas nos anos fechados.
+                </p>
+                <div class="bg-slate-900 p-4 rounded border border-slate-700 math-font text-xs overflow-x-auto whitespace-nowrap text-green-300 mb-4">
+                    P(x) = L₀(x)y₀ + L₁(x)y₁ + L₂(x)y₂ + L₃(x)y₃ + L₄(x)y₄
+                </div>
+                <div class="border-t border-slate-700 pt-4">
+                    <h3 class="text-white font-bold">Conclusão Matemática:</h3>
+                    <p class="text-red-400 mt-2 font-semibold">
+                        A segunda derivada positiva ($y'' > 0$) em 2024 confirma que a curva é "Côncava para Cima", indicando um crescimento acelerado e alarmante.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS ---
+        // Normalizando X: 2020 = 0, 2021 = 1, etc.
+        const rawData = [
+            { year: 2020, x: 0, y: 21900 },
+            { year: 2021, x: 1, y: 22100 },
+            { year: 2022, x: 2, y: 21200 },
+            { year: 2023, x: 3, y: 3160 },
+            { year: 2024, x: 4, y: 76655 }
+        ];
+
+        // --- MODELAGEM MATEMÁTICA: POLINÔMIO DE LAGRANGE ---
+        function lagrangeInterpolation(xTarget, points) {
+            let result = 0;
+            const n = points.length;
+
+            for (let i = 0; i < n; i++) {
+                let term = points[i].y;
+                for (let j = 0; j < n; j++) {
+                    if (i !== j) {
+                        const denominator = points[i].x - points[j].x;
+                        if (denominator !== 0) {
+                            term *= (xTarget - points[j].x) / denominator;
+                        }
+                    }
+                }
+                result += term;
+            }
+            return result;
+        }
+
+        // --- CÁLCULO DE DERIVADAS DISCRETAS ---
+        function calculateDiscreteDerivatives() {
+            const tbody = document.getElementById('derivativesTable');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let derivatives1 = []; // Velocidade
+            
+            // 1ª Derivada (dy/dx)
+            for (let i = 1; i < rawData.length; i++) {
+                let dy = rawData[i].y - rawData[i-1].y;
+                derivatives1.push({ year: rawData[i].year, val: dy });
+            }
+
+            // 2ª Derivada (d²y/dx²)
+            let derivatives2 = []; // Aceleração
+            for (let i = 1; i < derivatives1.length; i++) {
+                let d2y = derivatives1[i].val - derivatives1[i-1].val;
+                derivatives2.push({ year: derivatives1[i].year, val: d2y });
+            }
+
+            // Renderizar
+            rawData.forEach((d, index) => {
+                if (index === 0) return; 
+                
+                const row = document.createElement('tr');
+                const cellYear = document.createElement('td');
+                cellYear.textContent = d.year;
+                cellYear.className = "font-bold text-slate-200";
+                
+                const vel = derivatives1[index-1].val;
+                const cellVel = document.createElement('td');
+                cellVel.textContent = vel > 0 ? `+${vel.toLocaleString()}` : vel.toLocaleString();
+                cellVel.className = vel > 0 ? "text-red-400 math-font" : "text-blue-400 math-font";
+
+                const cellAcc = document.createElement('td');
+                if (index > 1) {
+                    const acc = derivatives2[index-2].val;
+                    cellAcc.textContent = acc > 0 ? `+${acc.toLocaleString()}` : acc.toLocaleString();
+                    cellAcc.className = acc > 0 ? "text-red-500 font-bold math-font" : "text-green-400 math-font";
+                } else {
+                    cellAcc.textContent = "-";
+                    cellAcc.className = "text-slate-600";
+                }
+
+                row.appendChild(cellYear);
+                row.appendChild(cellVel);
+                row.appendChild(cellAcc);
+                tbody.appendChild(row);
+            });
+        }
+
+        // --- SIMULAÇÃO DE LIMITES ---
+        function simulateLimits() {
+            const table = document.getElementById('limitTable');
+            if(!table) return;
+            table.innerHTML = '';
+            
+            const targetX = 4; // Ano 2024
+            const hValues = [0.1, 0.01, 0.001, 0.0001];
+            const fx = lagrangeInterpolation(targetX, rawData);
+
+            hValues.forEach(h => {
+                const fxh = lagrangeInterpolation(targetX + h, rawData);
+                const limitCalc = (fxh - fx) / h;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="text-blue-300 font-mono">${h}</td>
+                    <td class="text-yellow-300 font-bold font-mono">${Math.round(limitCalc).toLocaleString()}</td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        // --- VISUALIZAÇÃO CANVAS ---
+        function drawGraph() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('fireCanvas');
+            if (!container || !canvas) return;
+
+            // Definir tamanho real do canvas baseado no container
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Se o tamanho for 0, tentar novamente depois (ainda carregando layout)
+            if (width === 0 || height === 0) {
+                setTimeout(drawGraph, 100);
+                return;
+            }
+
+            // Ajuste para telas retina/HDPI
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            // Limpar
+            ctx.clearRect(0, 0, width, height);
+            
+            // Margens
+            const padding = { top: 40, right: 50, bottom: 40, left: 60 };
+            const chartW = width - padding.left - padding.right;
+            const chartH = height - padding.top - padding.bottom;
+            
+            // Escalas
+            const maxY = 90000; 
+            const minY = 0;
+            const mapX = (xVal) => padding.left + (xVal / 4) * chartW; 
+            const mapY = (yVal) => padding.top + chartH - ((yVal - minY) / (maxY - minY)) * chartH;
+
+            // 1. Grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            // Linhas Y
+            for (let i = 0; i <= 5; i++) {
+                const yVal = (maxY / 5) * i;
+                const yPos = mapY(yVal);
+                ctx.moveTo(padding.left, yPos);
+                ctx.lineTo(width - padding.right, yPos);
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '10px Inter';
+                ctx.fillText(Math.round(yVal/1000) + 'k', 10, yPos + 3);
+            }
+            // Linhas X
+            rawData.forEach(d => {
+                const xPos = mapX(d.x);
+                ctx.moveTo(xPos, padding.top);
+                ctx.lineTo(xPos, height - padding.bottom);
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px Inter';
+                ctx.fillText(d.year, xPos - 14, height - 10);
+            });
+            ctx.stroke();
+
+            // 2. Curva Interpolada (Suave)
+            ctx.beginPath();
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            
+            let firstPoint = true;
+            for (let i = 0; i <= 100; i++) {
+                const t = i / 100;
+                const curX = t * 4; 
+                const curY = lagrangeInterpolation(curX, rawData);
+                
+                // Evitar desenhar fora dos limites Y se a curva oscilar muito
+                if (curY >= -50000 && curY <= 150000) {
+                    const cx = mapX(curX);
+                    const cy = mapY(curY);
+                    if (firstPoint) { ctx.moveTo(cx, cy); firstPoint = false; }
+                    else { ctx.lineTo(cx, cy); }
+                }
+            }
+            ctx.stroke();
+
+            // 3. Tangente em 2024
+            const xRef = 4; 
+            const yRef = rawData[4].y;
+            // Cálculo da inclinação instantânea (h muito pequeno)
+            const h_tan = 0.0001;
+            const slope = (lagrangeInterpolation(xRef, rawData) - lagrangeInterpolation(xRef - h_tan, rawData)) / h_tan;
+            
+            // Desenhar linha tangente "para trás" para visualizar a inclinação
+            const tanLen = 0.5; // Comprimento visual no eixo X
+            const xStart = xRef - tanLen;
+            const yStart = yRef - (slope * tanLen);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(mapX(xRef), mapY(yRef));
+            ctx.lineTo(mapX(xStart), mapY(yStart));
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 4. Pontos de Dados
+            rawData.forEach(d => {
+                const cx = mapX(d.x);
+                const cy = mapY(d.y);
+                
+                ctx.beginPath();
+                ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+                ctx.fillStyle = d.year === 2024 ? '#ef4444' : '#f59e0b';
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Valor
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = 'bold 11px Inter';
+                ctx.fillText(d.y.toLocaleString(), cx - 15, cy - 15);
+            });
+        }
+
+        // --- INICIALIZAÇÃO SEGURA ---
+        function init() {
+            calculateDiscreteDerivatives();
+            simulateLimits();
+            // Pequeno delay para garantir renderização do layout CSS
+            setTimeout(drawGraph, 50);
+            window.addEventListener('resize', drawGraph);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    </script>
+</body>
+</html>
